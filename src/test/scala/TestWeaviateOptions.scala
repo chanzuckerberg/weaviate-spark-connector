@@ -195,6 +195,40 @@ class TestWeaviateOptions extends AnyFunSuite {
     assert(weaviateOptions.headers.asJava.get("x-cohere-api-key") == "COHERE_KEY")
   }
 
+  test("Test enable gRPC is set correctly") {
+    val options: CaseInsensitiveStringMap =
+      new CaseInsensitiveStringMap(Map("scheme" -> "http", "host" -> "localhost",
+        "className" -> "pinball", "batchSize" -> "19", "retries" -> "5", "retriesBackoff" -> "5",
+        "apiKey" -> "apiKey", "grpc:enable" -> "true").asJava)
+    val weaviateOptions: WeaviateOptions = new WeaviateOptions(options)
+
+    assert(weaviateOptions.scheme == "http")
+    assert(weaviateOptions.host == "localhost")
+    assert(weaviateOptions.className == "pinball")
+    assert(weaviateOptions.batchSize == 19)
+    assert(weaviateOptions.retries == 5)
+    assert(weaviateOptions.retriesBackoff == 5)
+    assert(weaviateOptions.timeout == 60)
+    assert(weaviateOptions.apiKey == "apiKey")
+    assert(weaviateOptions.useGRPC)
+
+    val options2: CaseInsensitiveStringMap =
+      new CaseInsensitiveStringMap(Map("scheme" -> "http", "host" -> "localhost",
+        "className" -> "pinball", "batchSize" -> "19", "retries" -> "5", "retriesBackoff" -> "5",
+        "apiKey" -> "apiKey", "grpc:enable" -> "True").asJava)
+    val weaviateOptions2: WeaviateOptions = new WeaviateOptions(options2)
+
+    assert(weaviateOptions2.scheme == "http")
+    assert(weaviateOptions2.host == "localhost")
+    assert(weaviateOptions2.className == "pinball")
+    assert(weaviateOptions2.batchSize == 19)
+    assert(weaviateOptions2.retries == 5)
+    assert(weaviateOptions2.retriesBackoff == 5)
+    assert(weaviateOptions2.timeout == 60)
+    assert(weaviateOptions2.apiKey == "apiKey")
+    assert(weaviateOptions2.useGRPC)
+  }
+
   test("Test that getConnection returns the same WeaviateClient object") {
     val options: CaseInsensitiveStringMap =
       new CaseInsensitiveStringMap(Map("scheme" -> "http", "host" -> "localhost:8080", "className" -> "pinball", "batchSize" -> "19").asJava)

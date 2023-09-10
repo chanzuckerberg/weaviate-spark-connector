@@ -644,6 +644,7 @@ class SparkIntegrationTestsOpenAI
     articles.write
       .format("io.weaviate.spark.Weaviate")
       .option("scheme", "http")
+      .option("grpc:enable", "false")
       .option("host", "localhost:8080")
       .option("header:X-OpenAI-Api-Key", "shouldntwork")
       .option("className", "Article")

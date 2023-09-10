@@ -117,6 +117,7 @@ def test_string_arrays(spark: SparkSession, weaviate_client: weaviate.Client):
     df.write.format("io.weaviate.spark.Weaviate") \
         .option("scheme", "http") \
         .option("host", "localhost:8080") \
+        .option("grpc:enable", "true") \
         .option("className", "Article") \
         .mode("append").save()
 
@@ -164,6 +165,7 @@ def test_null_values(spark: SparkSession, weaviate_client: weaviate.Client):
     df.write.format("io.weaviate.spark.Weaviate") \
         .option("scheme", "http") \
         .option("host", "localhost:8080") \
+        .option("grpc:enable", "true") \
         .option("className", "Article") \
         .mode("append").save()
 
@@ -198,6 +200,7 @@ def test_id_column(spark: SparkSession, weaviate_client: weaviate.Client):
     df.write.format("io.weaviate.spark.Weaviate") \
         .option("scheme", "http") \
         .option("host", "localhost:8080") \
+        .option("grpc:enable", "true") \
         .option("className", "Article") \
         .option("id", "id") \
         .mode("append").save()
@@ -271,6 +274,7 @@ def test_large_movie_dataset(spark: SparkSession, weaviate_client: weaviate.Clie
     df.write.format("io.weaviate.spark.Weaviate") \
         .option("scheme", "http") \
         .option("host", "localhost:8080") \
+        .option("grpc:enable", "true") \
         .option("className", "Movies") \
         .mode("append").save()
 
@@ -334,6 +338,7 @@ def test_kafka_streaming(spark: SparkSession, weaviate_client: weaviate.Client, 
         .format("io.weaviate.spark.Weaviate")
         .option("scheme", "http")
         .option("host", "localhost:8080")
+        .option("grpc:enable", "true")
         .option("className", "Article")
         .option("checkpointLocation", tmp_path.absolute())
         .outputMode("append")
@@ -371,6 +376,7 @@ def test_kafka_streaming_event_data(spark: SparkSession, weaviate_client: weavia
         .format("io.weaviate.spark.Weaviate")
         .option("scheme", "http")
         .option("host", "localhost:8080")
+        .option("grpc:enable", "true")
         .option("className", "Event")
         .option("checkpointLocation", tmp_path.absolute())
         .option("id", "id_column")

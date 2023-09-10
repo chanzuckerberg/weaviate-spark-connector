@@ -30,6 +30,7 @@ class WeaviateOptions(config: CaseInsensitiveStringMap) extends Serializable {
   val oidcAccessTokenLifetime: Long = config.getLong(WEAVIATE_OIDC_ACCESS_TOKEN_LIFETIME, 0)
   val oidcRefreshToken: String = config.getOrDefault(WEAVIATE_OIDC_REFRESH_TOKEN, "")
   val apiKey: String = config.getOrDefault(WEAVIATE_API_KEY, "")
+  val useGRPC: Boolean = config.getBoolean(WEAVIATE_ENABLE_GRPC, false)
 
   var headers: Map[String, String] = Map()
   config.forEach((option, value) => {
@@ -42,7 +43,7 @@ class WeaviateOptions(config: CaseInsensitiveStringMap) extends Serializable {
 
   def getClient(): WeaviateClient = {
     if (client != null) return client
-    val config = new Config(scheme, host, headers.asJava, timeout, timeout, timeout)
+    val config = new Config(scheme, host, headers.asJava, timeout, useGRPC)
 
     if (!oidcUsername.trim().isEmpty() && !oidcPassword.trim().isEmpty()) {
       client = WeaviateAuthClient.clientPassword(config, oidcUsername, oidcPassword, null)
@@ -78,4 +79,5 @@ object WeaviateOptions {
   val WEAVIATE_OIDC_REFRESH_TOKEN: String = "oidc:refreshToken"
   val WEAVIATE_API_KEY: String = "apiKey"
   val WEAVIATE_HEADER_PREFIX: String = "header:"
+  val WEAVIATE_ENABLE_GRPC: String = "grpc:enable"
 }

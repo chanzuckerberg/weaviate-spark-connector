@@ -21,12 +21,16 @@ class Weaviate extends TableProvider with DataSourceRegister {
     if (result.hasErrors) throw new WeaviateResultError(result.getError.getMessages.toString)
     if (result.getResult == null) throw new WeaviateClassNotFoundError("Class "+className+ " was not found.")
     val properties = result.getResult.getProperties.asScala
-    val structFields = properties.map(p =>
-      StructField(p.getName(), Utils.weaviateToSparkDatatype(p.getDataType), true, Metadata.empty))
-    if (weaviateOptions.vector != null)
-      structFields.append(StructField(weaviateOptions.vector, DataTypes.createArrayType(DataTypes.FloatType), true, Metadata.empty))
-    if (weaviateOptions.id != null)
+    val fieldNames = properties.map(_.getName)
+
+    val structFields = properties.map(p => Utils.weaviateToSparkStructField(p, weaviateOptions))
+
+    if (weaviateOptions.id != null && !fieldNames.contains(weaviateOptions.id))
       structFields.append(StructField(weaviateOptions.id, DataTypes.StringType, true, Metadata.empty))
+
+    if (weaviateOptions.vector != null && !fieldNames.contains(weaviateOptions.vector))
+      structFields.append(StructField(weaviateOptions.vector, DataTypes.createArrayType(DataTypes.FloatType), true, Metadata.empty))
+
     new StructType(structFields.toArray)
   }
   override def getTable(schema: StructType, partitioning: Array[Transform], properties: util.Map[String, String]): Table = {

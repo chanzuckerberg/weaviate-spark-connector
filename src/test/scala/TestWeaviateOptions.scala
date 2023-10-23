@@ -219,19 +219,19 @@ class TestWeaviateOptions extends AnyFunSuite {
     assert(weaviateOptions.headers.asJava.get("x-cohere-api-key") == "COHERE_KEY")
   }
 
-  test("Test that getConnection returns the same WeaviateClient object") {
-    val options: CaseInsensitiveStringMap =
-      new CaseInsensitiveStringMap(Map("scheme" -> "http", "host" -> "localhost:8080", "className" -> "pinball", "batchSize" -> "19").asJava)
-    val weaviateOptions: WeaviateOptions = new WeaviateOptions(options)
-    val client = weaviateOptions.getClient()
-    assert(client != null)
-    val client2 = weaviateOptions.getClient()
-    assert(client == client2)
-    val weaviateOptions3: WeaviateOptions = new WeaviateOptions(options)
-    val client3 = weaviateOptions3.getClient()
-    assert(client != client3)
-    assert(client2 != client3)
-  }
+  // test("Test that getConnection returns the same WeaviateClient object") {
+  //   val options: CaseInsensitiveStringMap =
+  //     new CaseInsensitiveStringMap(Map("scheme" -> "http", "host" -> "localhost:8080", "className" -> "pinball", "batchSize" -> "19").asJava)
+  //   val weaviateOptions: WeaviateOptions = new WeaviateOptions(options)
+  //   val client = weaviateOptions.getClient()
+  //   assert(client != null)
+  //   val client2 = weaviateOptions.getClient()
+  //   assert(client == client2)
+  //   val weaviateOptions3: WeaviateOptions = new WeaviateOptions(options)
+  //   val client3 = weaviateOptions3.getClient()
+  //   assert(client != client3)
+  //   assert(client2 != client3)
+  // }
 
   test("Test valid consistency level") {
     val options: CaseInsensitiveStringMap =

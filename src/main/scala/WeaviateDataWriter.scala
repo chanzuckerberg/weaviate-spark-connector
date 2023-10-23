@@ -1,5 +1,8 @@
 package io.weaviate.spark
 
+import java.time.Instant
+import java.time.ZonedDateTime
+
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.connector.write.{DataWriter, WriterCommitMessage}
@@ -13,6 +16,7 @@ case class WeaviateCommitMessage(msg: String) extends WriterCommitMessage
 
 case class WeaviateDataWriter(weaviateOptions: WeaviateOptions, schema: StructType)
   extends DataWriter[InternalRow] with Serializable with Logging {
+
   var batch = mutable.Map[String, WeaviateObject]()
 
   override def write(record: InternalRow): Unit = {
@@ -39,11 +43,21 @@ case class WeaviateDataWriter(weaviateOptions: WeaviateOptions, schema: StructTy
 
     if (results.hasErrors || results.getResult == null) {
       if (retries == 0) {
-        throw WeaviateResultError(s"error getting result and no more retries left." +
-          s" Error from Weaviate: ${results.getError.getMessages}")
+        if (results.getError != null) {
+          throw WeaviateResultError(s"error getting result and no more retries left." +
+            s" Error from Weaviate: ${results.getError.getMessages}")
+        }
+        else {
+          throw WeaviateResultError("error getting result and no more retries left")
+        }
       }
       if (retries > 0) {
-        logError(s"batch error: ${results.getError.getMessages}, will retry")
+        if (results.getError != null) {
+          logError(s"batch error: ${results.getError.getMessages}, will retry")
+        }
+        else {
+          logError(s"unknown error, will retry")
+        }
         logInfo(s"Retrying batch in ${weaviateOptions.retriesBackoff} seconds. Batch has following IDs: ${IDs}")
         Thread.sleep(weaviateOptions.retriesBackoff * 1000)
         writeBatch(retries - 1)
@@ -120,6 +134,10 @@ case class WeaviateDataWriter(weaviateOptions: WeaviateOptions, schema: StructTy
         // contains the the days since EPOCH for DateType
         val daysSinceEpoch = record.getLong(index)
         java.time.LocalDate.ofEpochDay(daysSinceEpoch).toString + "T00:00:00Z"
+      case TimestampType =>
+        val epochMicro = record.getLong(index)
+        val instant = Instant.ofEpochMilli(epochMicro / 1000)
+        instant.toString
       case default => throw new SparkDataTypeNotSupported(s"DataType ${default} is not supported by Weaviate")
     }
   }

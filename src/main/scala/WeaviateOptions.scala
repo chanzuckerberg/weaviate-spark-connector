@@ -2,6 +2,7 @@ package io.weaviate.spark
 
 import WeaviateOptions._
 
+import java.util.TimeZone
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 import io.weaviate.client.{Config, WeaviateClient, WeaviateAuthClient}
 import scala.collection.JavaConverters._
@@ -38,6 +39,20 @@ class WeaviateOptions(config: CaseInsensitiveStringMap) extends Serializable {
       throw new WeaviateOptionsError(s"Invalid consistency level: ${value}")
     value
   }
+  val partitionColumn: String = config.getOrDefault(WEAVIATE_PARTITION_COLUMN, "")
+  val queryMaximumResults: Int = config.getInt(WEAVIATE_QUERY_MAXIMUM_RESULTS, 100000)
+  val timeZone: String = {
+    val value = config.getOrDefault(WEAVIATE_TIME_ZONE, TimeZone.getDefault.getID)
+    if (!TimeZone.getAvailableIDs.contains(value))
+      throw new WeaviateOptionsError(s"Invalid time zone: ${value}")
+    value
+  }
+  val numPartitions: Int = config.getInt(WEAVIATE_NUM_PARTITIONS, -1)
+  val timestampColumns: Set[String] = {
+    Option(config.get(WEAVIATE_TIMESTAMP_COLUMNS)).map(value =>
+      value.split(",").map(_.trim).toSet
+    ).getOrElse(Set[String]())
+  }
 
   var headers: Map[String, String] = Map()
   config.forEach((option, value) => {
@@ -46,25 +61,23 @@ class WeaviateOptions(config: CaseInsensitiveStringMap) extends Serializable {
     }
   })
 
-  var client: WeaviateClient = _
+  // var client: WeaviateClient = _
 
   def getClient(): WeaviateClient = {
-    if (client != null) return client
+    // if (client != null) return client
     val config = new Config(scheme, host, headers.asJava, timeout, timeout, timeout)
 
     if (!oidcUsername.trim().isEmpty() && !oidcPassword.trim().isEmpty()) {
-      client = WeaviateAuthClient.clientPassword(config, oidcUsername, oidcPassword, null)
+      WeaviateAuthClient.clientPassword(config, oidcUsername, oidcPassword, null)
     } else if (!oidcClientSecret.trim().isEmpty()) {
-      client = WeaviateAuthClient.clientCredentials(config, oidcClientSecret, null)
+      WeaviateAuthClient.clientCredentials(config, oidcClientSecret, null)
     } else if (!oidcAccessToken.trim().isEmpty()) {
-      client = WeaviateAuthClient.bearerToken(config, oidcAccessToken, oidcAccessTokenLifetime, oidcRefreshToken)
+      WeaviateAuthClient.bearerToken(config, oidcAccessToken, oidcAccessTokenLifetime, oidcRefreshToken)
     } else if (!apiKey.trim().isEmpty()) {
-      client = WeaviateAuthClient.apiKey(config, apiKey)
+      WeaviateAuthClient.apiKey(config, apiKey)
     } else {
-      client = new WeaviateClient(config)
+      new WeaviateClient(config)
     }
-
-    client
   }
 }
 
@@ -88,4 +101,9 @@ object WeaviateOptions {
   val WEAVIATE_API_KEY: String = "apiKey"
   val WEAVIATE_HEADER_PREFIX: String = "header:"
   val WEAVIATE_CONSISTENCY_LEVEL: String = "consistencyLevel"
+  val WEAVIATE_PARTITION_COLUMN: String = "partitionColumn"
+  val WEAVIATE_QUERY_MAXIMUM_RESULTS: String = "queryMaximumResults"
+  val WEAVIATE_TIME_ZONE: String = "timeZone"
+  val WEAVIATE_NUM_PARTITIONS: String = "numPartitions"
+  val WEAVIATE_TIMESTAMP_COLUMNS: String = "timestampColumns"
 }

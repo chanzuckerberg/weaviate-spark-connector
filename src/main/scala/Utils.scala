@@ -1,8 +1,8 @@
 package io.weaviate.spark
 
-import org.apache.spark.sql.types.{DataType, DataTypes}
-
 import java.util
+import io.weaviate.client.v1.schema.model.Property
+import org.apache.spark.sql.types.{DataType, DataTypes, Metadata, StructField}
 
 object Utils {
   def weaviateToSparkDatatype(datatype: util.List[String]): DataType = {
@@ -19,5 +19,23 @@ object Utils {
       case "text[]" => DataTypes.createArrayType(DataTypes.StringType)
       case default => DataTypes.StringType
     }
+  }
+
+  def weaviateToSparkStructField(property: Property, options: WeaviateOptions): StructField = {
+    val propertyType = property.getDataType.get(0)
+    val isTimestampColumn = options.timestampColumns.contains(property.getName)
+
+    val dataType = if (isTimestampColumn) {
+      propertyType match {
+        case "date" => DataTypes.TimestampType
+        case "date[]" => DataTypes.createArrayType(DataTypes.TimestampType)
+        case default => throw new SparkDataTypeNotSupported(s"Conversion from ${propertyType} to timestamp is not supported")
+      }
+    }
+    else {
+      Utils.weaviateToSparkDatatype(property.getDataType)
+    }
+
+    StructField(property.getName, dataType, true, Metadata.empty)
   }
 }
